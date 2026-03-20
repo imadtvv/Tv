@@ -2,19 +2,23 @@ name: Update Playlist
 
 on:
   schedule:
-    - cron: "0 */6 * * *" # كل 6 ساعات
-  workflow_dispatch:
+    - cron: "0 */6 * * *" # يتم التحديث تلقائياً كل 6 ساعات
+  workflow_dispatch: # يتيح لك تشغيله يدوياً لتجربته الآن
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # إضافة الصلاحيات برمجياً لضمان القدرة على الكتابة (Push)
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 Clone repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # تحديث للإصدار الأحدث
 
       - name: 🟢 Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # تحديث للإصدار الأحدث
         with:
           node-version: 18
 
@@ -23,8 +27,15 @@ jobs:
 
       - name: 💾 Commit & Push
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add playlist.m3u
-          git commit -m "Update playlist"
-          git push
+          
+          # التحقق مما إذا كان هناك تغيير فعلي في الملف لتجنب الخطأ "nothing to commit"
+          if git diff --staged --quiet; then
+            echo "No changes in playlist.m3u, skipping commit."
+          else
+            git commit -m "Update playlist: $(date +'%Y-%m-%d %H:%M')"
+            git push
+          fi
