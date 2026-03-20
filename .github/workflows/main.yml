@@ -1,41 +1,52 @@
-name: Update Playlist
+name: FFmpeg Loop Smart
 
 on:
-  schedule:
-    - cron: "0 */6 * * *" # يتم التحديث تلقائياً كل 6 ساعات
-  workflow_dispatch: # يتيح لك تشغيله يدوياً لتجربته الآن
+  workflow_dispatch:
 
 jobs:
-  build:
+  stream:
     runs-on: ubuntu-latest
-    
-    # إضافة الصلاحيات برمجياً لضمان القدرة على الكتابة (Push)
     permissions:
       contents: write
 
     steps:
       - name: 📥 Clone repo
-        uses: actions/checkout@v4 # تحديث للإصدار الأحدث
+        uses: actions/checkout@v4
 
-      - name: 🟢 Install Node.js
-        uses: actions/setup-node@v4 # تحديث للإصدار الأحدث
-        with:
-          node-version: 18
+      - name: 🟢 Install FFmpeg
+        run: sudo apt update && sudo apt install -y ffmpeg
 
-      - name: ⚡ Run script
-        run: node generate.js
+      - name: 📁 Create streams
+        run: mkdir -p streams
 
-      - name: 💾 Commit & Push
+      - name: 🚀 Start Streaming
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add playlist.m3u
-          
-          # التحقق مما إذا كان هناك تغيير فعلي في الملف لتجنب الخطأ "nothing to commit"
-          if git diff --staged --quiet; then
-            echo "No changes in playlist.m3u, skipping commit."
-          else
-            git commit -m "Update playlist: $(date +'%Y-%m-%d %H:%M')"
-            git push
-          fi
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7756.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein1.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7755.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein2.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7749.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein3.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7754.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein4.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7753.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein5.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7752.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein6.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7748.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein7.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7750.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein8.m3u8 &
+          ffmpeg -re -i "http://t77ert.top/live/d8:e0:e1:6b:af:93/5Qw87kD9keEO7gd/7747.m3u8" -c copy -f hls -hls_time 4 -hls_list_size 5 streams/bein9.m3u8 &
+
+      # ⏳ انتظر 5h45min
+      - name: ⏳ Wait before restart
+        run: sleep 20700
+
+      # 🔁 شغل Run جديد قبل ما القديم يموت
+      - name: 🔁 Start new workflow
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+          -H "Accept: application/vnd.github+json" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/stream.yml/dispatches \
+          -d '{"ref":"main"}'
+
+      # ⏱ خلي القديم يكمل 10 دقائق
+      - name: ⏱ Grace time
+        run: sleep 600
+
+      - name: 🛑 Stop
+        run: echo "Old workflow stopping..."
